@@ -71,7 +71,7 @@
 	  <option value='IZIN'>IZIN</option>
 	  <option value='IJIN'>IJIN</option>
 	  </select>
-      <div class="col-6"><button id="btnMulaiAk" class="btn btn-success btn-custom w-100" onclick="processIzin('IZIN')" disabled>IZIN</button></div>
+      <div class="col-6"><button id="btnIzin" class="btn btn-success btn-custom w-100" onclick="processIzin('IZIN')" disabled>IZIN</button></div>
       
     </div>
   </div>
@@ -124,7 +124,7 @@
   const video = document.getElementById('video'), status = document.getElementById('status');
   const btnMasuk = document.getElementById('btnMasuk'), btnPulang = document.getElementById('btnPulang');
   const btnMulai = document.getElementById('btnMulai'), btnSelesai = document.getElementById('btnSelesai');   
-   const btnMulaiAk = document.getElementById('btnMulaiAk');
+   const btnMulaiAk = document.getElementById('btnMulaiAk'); btnIzin = document.getElementById('btnIzin');
 
   function showPage(pId, el) {
     document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active-page'));
@@ -232,6 +232,7 @@
         btnSelesai.disabled = false;
 		
 		btnMulaiAk.disabled = false;
+		btnIzin.disabled = false;
       } else {
         updateStatus("DI LUAR RADIUS", "danger");
         
