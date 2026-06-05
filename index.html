@@ -113,6 +113,7 @@
   const btnMasuk = document.getElementById('btnMasuk'), btnPulang = document.getElementById('btnPulang');
   const btnMulai = document.getElementById('btnMulai'), btnSelesai = document.getElementById('btnSelesai');
    const kolomket = document.getElementById('keterangan');
+   const ketaktivitas = document.getElementById('ketaktivitas');
    const btnMulaiAk = document.getElementById('btnMulaiAk');
 
   function showPage(pId, el) {
@@ -219,6 +220,8 @@
 		
 		btnMulai.disabled = false;
         btnSelesai.disabled = false;
+		
+		btnMulaiAk.disabled = false;
       } else {
         updateStatus("DI LUAR RADIUS", "danger");
         
@@ -322,7 +325,7 @@
     } else alert("Gagal!");
   }
 
-  function resetUI() { btnMasuk.disabled = false; btnPulang.disabled = false; btnMulai.disabled = false; btnSelesai.disabled = false; btnMulaiAk.disabled = false; kolomket.value(''); updateStatus("SISTEM SIAP","success"); }
+  function resetUI() { btnMasuk.disabled = false; btnPulang.disabled = false; btnMulai.disabled = false; btnSelesai.disabled = false; btnMulaiAk.disabled = false; kolomket.value(''); ketaktivitas.value(''); updateStatus("SISTEM SIAP","success"); }
   function updateStatus(t,c) { status.innerText = t; status.className = "badge-status badge rounded-pill bg-"+c+" px-3 py-2 text-white shadow-sm"; }
   window.onload = init;
 </script>
