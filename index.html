@@ -111,9 +111,7 @@
   let map, adminMarker;
   const video = document.getElementById('video'), status = document.getElementById('status');
   const btnMasuk = document.getElementById('btnMasuk'), btnPulang = document.getElementById('btnPulang');
-  const btnMulai = document.getElementById('btnMulai'), btnSelesai = document.getElementById('btnSelesai');
-   const kolomket = document.getElementById('keterangan');
-   const ketaktivitas = document.getElementById('ketaktivitas');
+  const btnMulai = document.getElementById('btnMulai'), btnSelesai = document.getElementById('btnSelesai');   
    const btnMulaiAk = document.getElementById('btnMulaiAk');
 
   function showPage(pId, el) {
@@ -264,7 +262,7 @@
     else {
       navigator.geolocation.getCurrentPosition(async p => {
         const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "lembur", name: match.label, type: tipe, location: p.coords.latitude + "," + p.coords.longitude, ket: n }) }).then(r => r.json());
-        alert(`✅ ${res.message}\nNama: ${match.label}`); resetUI();
+        alert(`✅ ${res.message}\nNama: ${match.label}`); location.reload();
       });
     }
   }
@@ -282,7 +280,7 @@
     else {
       navigator.geolocation.getCurrentPosition(async p => {
         const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "aktivitas", name: match.label, type: tipe, location: p.coords.latitude + "," + p.coords.longitude, ket: n }) }).then(r => r.json());
-        alert(`✅ ${res.message}\nNama: ${match.label}`); resetUI();
+        alert(`✅ ${res.message}\nNama: ${match.label}`); location.reload();
       });
     }
   }
@@ -325,7 +323,7 @@
     } else alert("Gagal!");
   }
 
-  function resetUI() { btnMasuk.disabled = false; btnPulang.disabled = false; btnMulai.disabled = false; btnSelesai.disabled = false; btnMulaiAk.disabled = false; kolomket.value(''); ketaktivitas.value(''); updateStatus("SISTEM SIAP","success"); }
+  function resetUI() { btnMasuk.disabled = false; btnPulang.disabled = false; btnMulai.disabled = false; btnSelesai.disabled = false; btnMulaiAk.disabled = false; updateStatus("SISTEM SIAP","success"); }
   function updateStatus(t,c) { status.innerText = t; status.className = "badge-status badge rounded-pill bg-"+c+" px-3 py-2 text-white shadow-sm"; }
   window.onload = init;
 </script>
