@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Absensi Pro - Turbo Mode</title>
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  
+  <style>
+    body { background: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
+    .main-container { max-width: 500px; margin: auto; padding: 15px; }
+    #video-container { position: relative; width: 100%; border-radius: 20px; overflow: hidden; background: #000; box-shadow: 0 10px 30px rgba(0,0,0,0.2); line-height: 0; }
+    video { width: 100%; height: auto; display: block; }
+    .nav-pills .nav-link { border-radius: 10px; font-weight: bold; font-size: 0.8rem; background: #fff; margin: 0 2px; border: 1px solid #ddd; color: #666; }
+    .nav-pills .nav-link.active { background-color: #0d6efd; color: white; }
+    .page-section { display: none; }
+    .active-page { display: block; }
+    .btn-custom { padding: 12px; font-weight: bold; border-radius: 12px; transition: 0.3s; }
+    #map { height: 250px; width: 100%; border-radius: 15px; margin-bottom: 15px; border: 1px solid #ddd; z-index: 1; }
+    .badge-status { font-size: 0.85rem; padding: 8px 15px; }
+  </style>
+</head>
+<body>
+
+<div class="main-container">
+  <ul class="nav nav-pills nav-justified mb-3 p-1 bg-white rounded-4 shadow-sm">
+    <li class="nav-item"><a class="nav-link active" href="#" onclick="showPage('absen-page', this)">Absen</a></li>
+	<li class="nav-item"><a class="nav-link" href="#" onclick="showPage('lembur-page', this)">Lembur</a></li>
+    <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('riwayat-page', this)">Riwayat</a></li>
+    <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('daftar-page', this)">Daftar</a></li>
+    <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('admin-page', this)">Admin</a></li>
+  </ul>
+
+  <div id="cam-section">
+    <div id="video-container" class="mb-3"><video id="video" autoplay muted playsinline></video></div>
+    <div class="text-center mb-4"><span id="status" class="badge-status badge rounded-pill bg-secondary text-white shadow-sm">Sinkronisasi...</span></div>
+  </div>
+
+  <div id="absen-page" class="page-section active-page">
+    <div class="row g-2">
+      <div class="col-6"><button id="btnMasuk" class="btn btn-success btn-custom w-100" onclick="processAbsence('MASUK')" disabled>MASUK</button></div>
+      <div class="col-6"><button id="btnPulang" class="btn btn-danger btn-custom w-100" onclick="processAbsence('PULANG')" disabled>PULANG</button></div>
+    </div>
+  </div>
+  
+  <div id="riwayat-page" class="page-section">
+    <div class="row g-2">
+      <div class="col-6"><button id="btnMulai" class="btn btn-success btn-custom w-100" onclick="processLembur('MULAI')" disabled>MULAI_LEMBUR</button></div>
+      <div class="col-6"><button id="btnSelesai" class="btn btn-danger btn-custom w-100" onclick="processLembur('SELESAI')" disabled>SELESAI_LEMBUR</button></div>
+    </div>
+  </div>
+
+  <div id="riwayat-page" class="page-section">
+    <div class="card border-0 shadow-sm p-2 rounded-4">
+      <div class="table-responsive" style="font-size: 0.75rem;">
+        <table class="table table-sm table-striped">
+          <thead class="table-dark"><tr><th>Nama</th><th>Divisi</th><th>Tipe</th><th>Waktu</th><th>Min</th><th>Map</th></tr></thead>
+          <tbody id="logTableBody"></tbody>
+        </table>
+      </div>
+      <button class="btn btn-sm btn-outline-primary w-100 mt-2" onclick="loadLogs()">Refresh</button>
+    </div>
+  </div>
+
+  <div id="daftar-page" class="page-section">
+    <div class="card border-0 shadow-sm p-4 rounded-4">
+      <input type="text" id="regNama" class="form-control mb-2" placeholder="Nama Lengkap">
+      <input type="text" id="regNIK" class="form-control mb-2" placeholder="NIK">
+      <input type="text" id="regDivisi" class="form-control mb-3" placeholder="Divisi">
+      <button id="btnReg" class="btn btn-primary btn-custom w-100" onclick="register()">SIMPAN WAJAH</button>
+    </div>
+  </div>
+
+  <div id="admin-page" class="page-section">
+    <div class="card border-0 shadow-sm p-4 rounded-4">
+      <div id="admin-auth">
+        <input type="password" id="adminPin" class="form-control mb-2" placeholder="PIN Admin">
+        <button class="btn btn-dark w-100" onclick="authAdmin()">Panel Admin</button>
+      </div>
+      <div id="admin-content" style="display:none;">
+        <div id="map"></div>
+        <input type="text" id="offName" class="form-control mb-2" placeholder="Nama Lokasi">
+        <input type="text" id="offLat" class="form-control mb-2" placeholder="Lat" readonly>
+        <input type="text" id="offLon" class="form-control mb-2" placeholder="Lon" readonly>
+        <input type="number" id="offRad" class="form-control mb-3" placeholder="Radius (Meter)">
+        <button class="btn btn-primary w-100" onclick="addOffice()">Simpan Lokasi</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // GANTI DENGAN URL GAS ANDA
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbyK4y98vcY6DnJXzILLpLPYnCM_fezjqsVkxoRNG33XKp5VYzHPqfpUngh-0mz0J11rjA/exec"; 
+  
+  let labeledDescriptors = [], officeLocations = [];
+  let map, adminMarker;
+  const video = document.getElementById('video'), status = document.getElementById('status');
+  const btnMasuk = document.getElementById('btnMasuk'), btnPulang = document.getElementById('btnPulang');
+  const btnMulai = document.getElementById('btnMulai'), btnSelesai = document.getElementById('btnSelesai');
+
+  function showPage(pId, el) {
+    document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active-page'));
+    document.getElementById(pId).classList.add('active-page');
+    document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('cam-section').style.display = (pId === 'riwayat-page' || pId === 'admin-page') ? 'none' : 'block';
+    if(pId === 'riwayat-page') loadLogs();
+    if(pId === 'admin-page') initAdminMap();
+  }
+
+  // OPTIMASI: Inisialisasi Paralel agar Cepat
+  async function init() {
+    const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+    try {
+      updateStatus("MENGHUBUNGKAN...", "warning");
+
+      // 1. Jalankan Kamera & Load Model AI
+      const [cameraStream] = await Promise.all([
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } }),
+        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+      ]);
+      video.srcObject = cameraStream;
+
+      updateStatus("SINKRON DATA...", "info");
+
+      // 2. Ambil data dari Google Sheets secara terpisah agar mudah dilacak jika gagal
+      const fetchFaces = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "getFaces" }) });
+      const resFaces = await fetchFaces.json();
+      
+      const fetchOffices = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "getOffices" }) });
+      const resOffices = await fetchOffices.json();
+
+      // 3. Masukkan data ke variabel global
+      labeledDescriptors = resFaces.map(d => new faceapi.LabeledFaceDescriptors(d.name, [new Float32Array(d.descriptor)]));
+      officeLocations = resOffices;
+      
+      checkLocation(); // Hitung jarak setelah data kantor siap
+
+    } catch (e) { 
+      console.error("Detail Error:", e);
+      updateStatus("GAGAL SINKRON", "danger");
+      // Pesan error lebih detail
+      alert("Koneksi Gagal: " + e.message + "\n\nPastikan Deployment GAS sudah diset ke 'Anyone' dan URL sudah benar.");
+    }
+  }
+
+  // 1. Fungsi Menghitung Jarak yang Lebih Presisi
+  function getDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371000;
+    const dLat = (lat2-lat1)*Math.PI/180, dLon = (lon2-lon1)*Math.PI/180;
+    const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+  }
+
+  // 2. Fungsi Cek Lokasi dengan Akurasi Tinggi & Detail Jarak
+/*function checkLocation() {
+    navigator.geolocation.getCurrentPosition(pos => {
+      const uLat = pos.coords.latitude, uLon = pos.coords.longitude;
+      let found = officeLocations.find(o => getDistance(uLat, uLon, o.lat, o.lon) <= o.rad);
+      if(found) { updateStatus("LOKASI: "+found.name,"success"); btnMasuk.disabled = false; btnPulang.disabled = false; }
+      else { updateStatus("DI LUAR RADIUS","danger"); alert("Anda di luar radius kantor!"); }
+    }, () => alert("GPS Mati!"), {enableHighAccuracy:true});
+  }
+*/
+  function checkLocation() {
+    updateStatus("MENCARI GPS AKURAT...", "warning");
+    
+    // Opsi GPS Akurasi Tinggi
+    const options = {
+      enableHighAccuracy: true, // Memaksa HP menggunakan Satelit (bukan cuma WiFi/Cell Tower)
+      timeout: 10000,           // Menunggu sinyal stabil selama maksimal 10 detik
+      maximumAge: 0             // Selalu ambil lokasi terbaru, jangan gunakan cache
+    };
+
+    navigator.geolocation.getCurrentPosition(pos => {
+      const uLat = pos.coords.latitude;
+      const uLon = pos.coords.longitude;
+      const accuracy = pos.coords.accuracy; // Memberitahu seberapa akurat sinyalnya (dalam meter)
+
+      console.log(`Lokasi: ${uLat}, ${uLon} | Akurasi: ${accuracy} meter`);
+
+      let foundOffice = null;
+      let minDistance = Infinity;
+
+      // Loop semua kantor
+      officeLocations.forEach(o => {
+        const dist = getDistance(uLat, uLon, parseFloat(o.lat), parseFloat(o.lon));
+        if (dist < minDistance) {
+          minDistance = dist;
+          if (dist <= parseFloat(o.rad)) {
+            foundOffice = o;
+          }
+        }
+      });
+
+      if (foundOffice) {
+        updateStatus("LOKASI: " + foundOffice.name, "success");
+        btnMasuk.disabled = false;
+        btnPulang.disabled = false;
+      } else {
+        updateStatus("DI LUAR RADIUS", "danger");
+        
+        // MENAMPILKAN DETAIL JARAK (Agar user tahu seberapa jauh melesetnya)
+        const selisih = Math.round(minDistance - (officeLocations[0] ? officeLocations[0].rad : 0));
+        alert(`Anda berada di luar area kantor!\n\nJarak Anda saat ini: ${Math.round(minDistance)} meter.\nRadius diizinkan: ${officeLocations[0] ? officeLocations[0].rad : 0} meter.\nSelisih: ${selisih} meter.\n\nSaran: Pastikan "Lokasi Akurat" di HP aktif atau berdiri dekat jendela.`);
+      }
+    }, (err) => {
+      updateStatus("GPS TIDAK TERDETEKSI", "danger");
+      alert("Gagal mengambil lokasi. Pastikan GPS HP aktif dan Izin Lokasi di browser diberikan.");
+    }, options);
+  }
+  
+  async function processAbsence(tipe) {
+    if(labeledDescriptors.length === 0) return alert("Database wajah kosong!");
+    btnMasuk.disabled = true; btnPulang.disabled = true; updateStatus("MENDETEKSI...", "warning");
+    const d = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+    if(!d) { alert("Wajah tidak terlihat!"); resetUI(); return; }
+    const match = new faceapi.FaceMatcher(labeledDescriptors, 0.6).findBestMatch(d.descriptor);
+    if(match.label === 'unknown') { alert("Wajah tidak terdaftar!"); resetUI(); }
+    else {
+      navigator.geolocation.getCurrentPosition(async p => {
+        const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "attendance", name: match.label, type: tipe, location: p.coords.latitude + "," + p.coords.longitude }) }).then(r => r.json());
+        alert(`✅ ${res.message}\nNama: ${match.label}`); resetUI();
+      });
+    }
+  }
+  
+  
+  async function processLembur(tipe) {
+    if(labeledDescriptors.length === 0) return alert("Database wajah kosong!");
+    btnMulai.disabled = true; btnSelesai.disabled = true; updateStatus("MENDETEKSI...", "warning");
+    const d = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+    if(!d) { alert("Wajah tidak terlihat!"); resetUI(); return; }
+    const match = new faceapi.FaceMatcher(labeledDescriptors, 0.6).findBestMatch(d.descriptor);
+    if(match.label === 'unknown') { alert("Wajah tidak terdaftar!"); resetUI(); }
+    else {
+      navigator.geolocation.getCurrentPosition(async p => {
+        const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "attendance", name: match.label, type: tipe, location: p.coords.latitude + "," + p.coords.longitude }) }).then(r => r.json());
+        alert(`✅ ${res.message}\nNama: ${match.label}`); resetUI();
+      });
+    }
+  }
+
+  async function loadLogs() {
+    const b = document.getElementById('logTableBody'); b.innerHTML = '<tr><td colspan="6">Memuat...</td></tr>';
+    try {
+      const logs = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "getLogs" }) }).then(r => r.json());
+      b.innerHTML = logs.slice(1).map(l => `<tr><td>${l[0]}</td><td>${l[1]}</td><td><span class="badge ${l[2]=='MASUK'?'bg-success':'bg-danger'}">${l[2]}</span></td><td>${l[3]}</td><td>${l[4]||'-'}</td><td><a href="https://www.google.com/maps?q=${l[5]}" target="_blank">Map</a></td></tr>`).join('');
+    } catch (e) { b.innerHTML = '<tr><td colspan="6">Gagal memuat.</td></tr>'; }
+  }
+
+  function initAdminMap() {
+    if (map) return;
+    map = L.map('map').setView([-6.2000, 106.8166], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    map.on('click', e => {
+      if (adminMarker) adminMarker.setLatLng(e.latlng); else adminMarker = L.marker(e.latlng).addTo(map);
+      document.getElementById('offLat').value = e.latlng.lat.toFixed(6);
+      document.getElementById('offLon').value = e.latlng.lng.toFixed(6);
+    });
+  }
+
+  function authAdmin() { if(document.getElementById('adminPin').value === "123456") { document.getElementById('admin-auth').style.display='none'; document.getElementById('admin-content').style.display='block'; setTimeout(()=>map.invalidateSize(),400); } else alert("Salah!"); }
+  
+  async function addOffice() {
+    const d = { name: document.getElementById('offName').value, lat: document.getElementById('offLat').value, lon: document.getElementById('offLon').value, rad: document.getElementById('offRad').value };
+    await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "saveOffice", pin: "123456", data: d }) });
+    alert("Lokasi disimpan!"); location.reload();
+  }
+
+  async function register() {
+    const n = document.getElementById('regNama').value, ni = document.getElementById('regNIK').value, dv = document.getElementById('regDivisi').value;
+    if(!n || !ni || !dv) return alert("Lengkapi data!");
+    updateStatus("MEREKAM...", "warning");
+    const d = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+    if(d) {
+      await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "register", name: n, nik: ni, divisi: dv, descriptor: Array.from(d.descriptor) }) });
+      alert("Registrasi Sukses!"); location.reload();
+    } else alert("Gagal!");
+  }
+
+  function resetUI() { btnMasuk.disabled = false; btnPulang.disabled = false; updateStatus("SISTEM SIAP","success"); }
+  function updateStatus(t,c) { status.innerText = t; status.className = "badge-status badge rounded-pill bg-"+c+" px-3 py-2 text-white shadow-sm"; }
+  window.onload = init;
+</script>
+</body>
+</html>
