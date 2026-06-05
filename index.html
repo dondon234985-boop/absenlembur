@@ -30,6 +30,7 @@
   <ul class="nav nav-pills nav-justified mb-3 p-1 bg-white rounded-4 shadow-sm">
     <li class="nav-item"><a class="nav-link active" href="#" onclick="showPage('absen-page', this)">Absen</a></li>
 	<li class="nav-item"><a class="nav-link" href="#" onclick="showPage('lembur-page', this)">Lembur</a></li>
+	<li class="nav-item"><a class="nav-link" href="#" onclick="showPage('aktivitas-page', this)">Aktivitas</a></li>
     <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('riwayat-page', this)">Riwayat</a></li>
     <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('daftar-page', this)">Daftar</a></li>
     <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('admin-page', this)">Admin</a></li>
@@ -52,6 +53,14 @@
 	  <input type="text" id="keterangan" class="form-control mb-3" placeholder="Keterangan Lembur">
       <div class="col-6"><button id="btnMulai" class="btn btn-success btn-custom w-100" onclick="processLembur('MULAI')" disabled>MULAI_LEMBUR</button></div>
       <div class="col-6"><button id="btnSelesai" class="btn btn-danger btn-custom w-100" onclick="processLembur('SELESAI')" disabled>SELESAI_LEMBUR</button></div>
+    </div>
+  </div>
+  
+  <div id="aktivitas-page" class="page-section">
+    <div class="row g-2">
+	  <input type="text" id="ketaktivitas" class="form-control mb-3" placeholder="Keterangan Aktivitas">
+      <div class="col-6"><button id="btnMulaiAk" class="btn btn-success btn-custom w-100" onclick="processAktivitas('MULAIAK')" disabled>AKTIVITAS</button></div>
+      
     </div>
   </div>
 
@@ -96,7 +105,7 @@
 
 <script>
   // GANTI DENGAN URL GAS ANDA
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbzPzFKOBYq57ecjQ1m8BtZX5GEhVBHHT810R7KLTd7b-nuNYnwMmuqvk0hR4vOO0fc/exec"; 
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbxyagH2b4xNwINah0U6_12PVwfH6KB_gWDgAUS0HjQPSu2VVwXpI9aoFCRi6ibrCBE/exec"; 
   
   let labeledDescriptors = [], officeLocations = [];
   let map, adminMarker;
@@ -104,6 +113,7 @@
   const btnMasuk = document.getElementById('btnMasuk'), btnPulang = document.getElementById('btnPulang');
   const btnMulai = document.getElementById('btnMulai'), btnSelesai = document.getElementById('btnSelesai');
    const kolomket = document.getElementById('keterangan');
+   const btnMulaiAk = document.getElementById('btnMulaiAk');
 
   function showPage(pId, el) {
     document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active-page'));
@@ -240,7 +250,7 @@
   
   async function processLembur(tipe) {
 	const n = document.getElementById('keterangan').value;
-	if(!n) return alert("Isi Keterangan Lembur");
+	if(!n) return alert("Isi Keterangan");
 	
     if(labeledDescriptors.length === 0) return alert("Database wajah kosong!");
     btnMulai.disabled = true; btnSelesai.disabled = true; updateStatus("MENDETEKSI...", "warning");
@@ -251,6 +261,24 @@
     else {
       navigator.geolocation.getCurrentPosition(async p => {
         const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "lembur", name: match.label, type: tipe, location: p.coords.latitude + "," + p.coords.longitude, ket: n }) }).then(r => r.json());
+        alert(`✅ ${res.message}\nNama: ${match.label}`); resetUI();
+      });
+    }
+  }
+  
+  async function processAktivitas(tipe) {
+	const n = document.getElementById('ketaktivitas').value;
+	if(!n) return alert("Isi Keterangan");
+	
+    if(labeledDescriptors.length === 0) return alert("Database wajah kosong!");
+    btnMulaiAk.disabled = true; updateStatus("MENDETEKSI...", "warning");
+    const d = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+    if(!d) { alert("Wajah tidak terlihat!"); resetUI(); return; }
+    const match = new faceapi.FaceMatcher(labeledDescriptors, 0.6).findBestMatch(d.descriptor);
+    if(match.label === 'unknown') { alert("Wajah tidak terdaftar!"); resetUI(); }
+    else {
+      navigator.geolocation.getCurrentPosition(async p => {
+        const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "aktivitas", name: match.label, type: tipe, location: p.coords.latitude + "," + p.coords.longitude, ket: n }) }).then(r => r.json());
         alert(`✅ ${res.message}\nNama: ${match.label}`); resetUI();
       });
     }
@@ -294,7 +322,7 @@
     } else alert("Gagal!");
   }
 
-  function resetUI() { btnMasuk.disabled = false; btnPulang.disabled = false; btnMulai.disabled = false; btnSelesai.disabled = false; kolomket.value(''); updateStatus("SISTEM SIAP","success"); }
+  function resetUI() { btnMasuk.disabled = false; btnPulang.disabled = false; btnMulai.disabled = false; btnSelesai.disabled = false; btnMulaiAk.disabled = false; kolomket.value(''); updateStatus("SISTEM SIAP","success"); }
   function updateStatus(t,c) { status.innerText = t; status.className = "badge-status badge rounded-pill bg-"+c+" px-3 py-2 text-white shadow-sm"; }
   window.onload = init;
 </script>
