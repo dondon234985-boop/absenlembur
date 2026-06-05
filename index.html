@@ -67,7 +67,10 @@
   
   <div id="izin-page" class="page-section">
     <div class="row g-2">
-	  <input type="text" id="ketizin" class="form-control mb-3" placeholder="Keterangan : Izin atau Sakit">
+	  <select id="ketizin" class="form-control mb-3" name='ketizin'>
+	  <option value='IZIN'>IZIN</option>
+	  <option value='IJIN'>IJIN</option>
+	  </select>
       <div class="col-6"><button id="btnIzin" class="btn btn-success btn-custom w-100" onclick="processIzin('IZIN')" disabled>IZIN</button></div>
       
     </div>
@@ -114,7 +117,7 @@
 
 <script>
   // GANTI DENGAN URL GAS ANDA
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbw2R7NBoXULU0gHIugj8UbhVy5zIC1pgwmwWiA_4OGKpKSQb-5TKgzMGKCBqtmIdfI/exec"; 
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbz9IqBDJgnGF42sr6P0t0fHp9zUdu9Z4Ym73bYwvIKodftpYB3vtEA1Gk4EwDnx_9g/exec"; 
   
   let labeledDescriptors = [], officeLocations = [];
   let map, adminMarker;
