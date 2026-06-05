@@ -289,7 +289,7 @@
     } else alert("Gagal!");
   }
 
-  function resetUI() { btnMasuk.disabled = false; btnPulang.disabled = false; updateStatus("SISTEM SIAP","success"); }
+  function resetUI() { btnMasuk.disabled = false; btnPulang.disabled = false; btnMulai.disabled = false; btnSelesai.disabled = false; updateStatus("SISTEM SIAP","success"); }
   function updateStatus(t,c) { status.innerText = t; status.className = "badge-status badge rounded-pill bg-"+c+" px-3 py-2 text-white shadow-sm"; }
   window.onload = init;
 </script>
