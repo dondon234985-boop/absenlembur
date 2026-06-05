@@ -67,10 +67,7 @@
   
   <div id="izin-page" class="page-section">
     <div class="row g-2">
-	  <select id="ketizin" class="form-control mb-3" name='ketizin'>
-	  <option value='IZIN'>IZIN</option>
-	  <option value='IJIN'>IJIN</option>
-	  </select>
+	  <input type="text" id="ketizin" class="form-control mb-3" placeholder="Keterangan : Izin atau Sakit">
       <div class="col-6"><button id="btnIzin" class="btn btn-success btn-custom w-100" onclick="processIzin('IZIN')" disabled>IZIN</button></div>
       
     </div>
@@ -301,6 +298,7 @@
   
   async function processIzin(tipe) {
 	const n = document.getElementById('ketizin').value;	
+	if(!n) return alert("Isi Keterangan");
 	
     if(labeledDescriptors.length === 0) return alert("Database wajah kosong!");
     btnMulaiAk.disabled = true; updateStatus("MENDETEKSI...", "warning");
