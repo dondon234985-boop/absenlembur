@@ -49,6 +49,7 @@
   
   <div id="lembur-page" class="page-section">
     <div class="row g-2">
+	  <input type="text" id="keterangan" class="form-control mb-3" placeholder="Keterangan Lembur">
       <div class="col-6"><button id="btnMulai" class="btn btn-success btn-custom w-100" onclick="processLembur('MULAI')" disabled>MULAI_LEMBUR</button></div>
       <div class="col-6"><button id="btnSelesai" class="btn btn-danger btn-custom w-100" onclick="processLembur('SELESAI')" disabled>SELESAI_LEMBUR</button></div>
     </div>
@@ -95,7 +96,7 @@
 
 <script>
   // GANTI DENGAN URL GAS ANDA
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbyK07YBFsBONi4p0OhlAniJ-ypIv4w8j1V2cg2YjNvvNDbyiQ_MaEjvuqnnx5nlrf0/exec"; 
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbzPzFKOBYq57ecjQ1m8BtZX5GEhVBHHT810R7KLTd7b-nuNYnwMmuqvk0hR4vOO0fc/exec"; 
   
   let labeledDescriptors = [], officeLocations = [];
   let map, adminMarker;
@@ -204,7 +205,7 @@
         updateStatus("LOKASI: " + foundOffice.name, "success");
         btnMasuk.disabled = false;
         btnPulang.disabled = false;
-
+		
 		btnMulai.disabled = false;
         btnSelesai.disabled = false;
       } else {
@@ -237,6 +238,9 @@
   
   
   async function processLembur(tipe) {
+	const n = document.getElementById('keterangan').value;
+	if(!n) return alert("Isi Keterangan Lembur");
+	
     if(labeledDescriptors.length === 0) return alert("Database wajah kosong!");
     btnMulai.disabled = true; btnSelesai.disabled = true; updateStatus("MENDETEKSI...", "warning");
     const d = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
@@ -245,7 +249,7 @@
     if(match.label === 'unknown') { alert("Wajah tidak terdaftar!"); resetUI(); }
     else {
       navigator.geolocation.getCurrentPosition(async p => {
-        const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "lembur", name: match.label, type: tipe, location: p.coords.latitude + "," + p.coords.longitude }) }).then(r => r.json());
+        const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "lembur", name: match.label, type: tipe, location: p.coords.latitude + "," + p.coords.longitude, ket: n }) }).then(r => r.json());
         alert(`✅ ${res.message}\nNama: ${match.label}`); resetUI();
       });
     }
